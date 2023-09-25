@@ -1,0 +1,17 @@
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\obj\Debug\net6.0\MinimalChat.Data.csproj.AssemblyReference.cache
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\obj\Debug\net6.0\MinimalChat.Data.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\obj\Debug\net6.0\MinimalChat.Data.AssemblyInfoInputs.cache
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\obj\Debug\net6.0\MinimalChat.Data.AssemblyInfo.cs
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\obj\Debug\net6.0\MinimalChat.Data.csproj.CoreCompileInputs.cache
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\bin\Debug\net6.0\MinimalChat.Data.deps.json
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\bin\Debug\net6.0\MinimalChat.Data.runtimeconfig.json
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\bin\Debug\net6.0\MinimalChat.Data.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\bin\Debug\net6.0\MinimalChat.Data.pdb
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\bin\Debug\net6.0\MinimalChat.Domain.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\bin\Debug\net6.0\MinimalChat.Domain.pdb
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\obj\Debug\net6.0\MinimalChat.Data.csproj.CopyComplete
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\obj\Debug\net6.0\MinimalChat.Data.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\obj\Debug\net6.0\refint\MinimalChat.Data.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\obj\Debug\net6.0\MinimalChat.Data.pdb
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\obj\Debug\net6.0\MinimalChat.Data.genruntimeconfig.cache
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Data\obj\Debug\net6.0\ref\MinimalChat.Data.dll

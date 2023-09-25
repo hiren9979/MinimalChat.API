@@ -1,0 +1,14 @@
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\bin\Debug\net6.0\MinimalChat.Domain.deps.json
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\bin\Debug\net6.0\MinimalChat.Domain.runtimeconfig.json
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\bin\Debug\net6.0\MinimalChat.Domain.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\bin\Debug\net6.0\MinimalChat.Domain.pdb
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\obj\Debug\net6.0\MinimalChat.Domain.csproj.AssemblyReference.cache
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\obj\Debug\net6.0\MinimalChat.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\obj\Debug\net6.0\MinimalChat.Domain.AssemblyInfoInputs.cache
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\obj\Debug\net6.0\MinimalChat.Domain.AssemblyInfo.cs
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\obj\Debug\net6.0\MinimalChat.Domain.csproj.CoreCompileInputs.cache
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\obj\Debug\net6.0\MinimalChat.Domain.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\obj\Debug\net6.0\refint\MinimalChat.Domain.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\obj\Debug\net6.0\MinimalChat.Domain.pdb
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\obj\Debug\net6.0\MinimalChat.Domain.genruntimeconfig.cache
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.Domain\obj\Debug\net6.0\ref\MinimalChat.Domain.dll
