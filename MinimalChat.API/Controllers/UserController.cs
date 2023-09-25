@@ -116,5 +116,49 @@ namespace Minimal_chat_application.Controllers
          
         }
 
+        [HttpGet("GetUsers")]
+        [Authorize]
+        public IActionResult GetUsers()
+        {
+            var users = _context.Users
+                .Select(u => new User
+                {
+                    Id = u.Id,
+                    FirstName = u.FirstName + " " + u.LastName,
+                    Email = u.Email
+                })
+                .ToList();
+
+            if (users.Count == 0)
+            {
+                return NotFound(new { error = "No users found" });
+            }
+
+            return Ok(new { users });
+        }
+
+        //Generate jwt token
+        private string GenerateJwtToken(User user)
+        {
+            var authClaims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                        new Claim(ClaimTypes.Name, user.FirstName),
+                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    };
+
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                expires: DateTime.Now.AddHours(3),
+                claims: authClaims,
+                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+                );
+
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
     }
 }
