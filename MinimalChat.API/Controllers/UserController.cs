@@ -10,8 +10,11 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.Extensions.Configuration;
-
-
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
+using Google.Apis.Auth;
+using MinimalChat.API;
+using Microsoft.Extensions.Options;
 
 namespace Minimal_chat_application.Controllers
 {
@@ -19,28 +22,39 @@ namespace Minimal_chat_application.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
+        private static List<User> UserList = new List<User>();
         private readonly UserManager<User> _userManager;
         private readonly SignInManager<User> _signInManager;
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
+        private readonly AppSettings _appSettings;
 
 
         public UserController(UserManager<User> userManager, SignInManager<User> signInManager, ApplicationDbContext context,
-            IConfiguration configuration)
+            IConfiguration configuration, IOptions<AppSettings> applicationSetting
+            )
         {
             _userManager = userManager;
             _signInManager = signInManager;
             _context = context;
             _configuration = configuration;
+            _appSettings = applicationSetting.Value;
 
         }
 
         [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel userRegisterModel)
+        public async Task<IActionResult> Register([FromQuery] RegisterModel userRegisterModel)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(new { error = "Validation failed", errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+            }
+
+            // Check if a user with the same email already exists
+            var existingUser = await _userManager.FindByEmailAsync(userRegisterModel.Email);
+            if (existingUser != null)
+            {
+                return Conflict(new { error = "User already registered with this email" });
             }
 
             var user = new User
@@ -63,11 +77,11 @@ namespace Minimal_chat_application.Controllers
                     lastName = user.LastName,
                     email = user.Email
                 });
-
             }
             else
             {
-                return Conflict(new { error = "User already registered with this email" });
+                // Handle other registration errors here
+                return BadRequest(new { error = "User registration failed", errors = result.Errors.Select(e => e.Description) });
             }
         }
 
@@ -115,6 +129,40 @@ namespace Minimal_chat_application.Controllers
             }
          
         }
+
+        [HttpPost("LoginWithGoogle")]
+        public async Task<IActionResult> LoginWithGoogle([FromBody] string credential)
+        {
+            var settings = new GoogleJsonWebSignature.ValidationSettings()
+            {
+                Audience = new List<string> { this._appSettings.GoogleClientId }
+            };
+
+            var payload = await GoogleJsonWebSignature.ValidateAsync(credential, settings);
+
+            //var user = UserList.Where(x => x.UserName == payload.Name).FirstOrDefault();
+
+            var user = await _userManager.FindByEmailAsync(payload.Email);
+
+                
+            if (user != null)
+            {
+                var token = GenerateJwtToken(user);
+                var profile = new
+                {
+                    id = user.Id,
+                    name = user.UserName,
+                    email = user.Email
+                };
+                return Ok(new { token, profile });
+            }
+            else
+            {
+                return BadRequest();
+            }
+        }
+
+
 
         [HttpGet("GetUsers")]
         [Authorize]
