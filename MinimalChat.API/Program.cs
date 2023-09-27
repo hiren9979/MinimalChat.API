@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -6,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
+using MinimalChat.API;
 using System.Text;
 
 namespace Minimal_chat_application
@@ -69,6 +72,9 @@ namespace Minimal_chat_application
                     b => b.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.GetName().Name)); // Replace YourDbContextClass with your actual DbContext class
             });
 
+            builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("Jwt"));
+
+
 
             builder.Services.AddAuthentication(options =>
             {
@@ -91,8 +97,20 @@ namespace Minimal_chat_application
 
             builder.Services.AddCors(p => p.AddPolicy("corspolicy", build =>
             {
-                build.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
+                build.WithOrigins("http://localhost:4200").AllowAnyMethod().AllowAnyHeader().AllowCredentials(); ;
             }));
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
+            })
+            .AddCookie()
+            .AddGoogle(options =>
+            {
+                options.ClientId = "503120430725-gv7140iqf1ma8bssnjrst71hbuaa9m2u.apps.googleusercontent.com";
+                options.ClientSecret = "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";
+            });
 
             var app = builder.Build();
 

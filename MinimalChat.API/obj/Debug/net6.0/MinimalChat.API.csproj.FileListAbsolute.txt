@@ -95,3 +95,9 @@ C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\Mini
 C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.API\obj\Debug\net6.0\MinimalChat.API.pdb
 C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.API\obj\Debug\net6.0\MinimalChat.API.genruntimeconfig.cache
 C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.API\obj\Debug\net6.0\ref\MinimalChat.API.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.API\bin\Debug\net6.0\Microsoft.AspNetCore.Authentication.Google.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.API\bin\Debug\net6.0\Google.Apis.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.API\bin\Debug\net6.0\Google.Apis.Auth.PlatformServices.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.API\bin\Debug\net6.0\Google.Apis.Auth.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.API\bin\Debug\net6.0\Google.Apis.Core.dll
+C:\Users\admin\source\repos\Hiren\Internship\MinmalChat.API\MinimalChat.API\MinimalChat.API\bin\Debug\net6.0\Newtonsoft.Json.dll
