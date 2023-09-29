@@ -8,6 +8,7 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
+using MinimalChat.API.Hubs;
 using MinimalChat.API;
 using System.Text;
 
@@ -74,6 +75,8 @@ namespace Minimal_chat_application
 
             builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("Jwt"));
 
+            //Add signalR service
+            builder.Services.AddSignalR();
 
 
             builder.Services.AddAuthentication(options =>
@@ -114,6 +117,7 @@ namespace Minimal_chat_application
 
             var app = builder.Build();
 
+           
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
@@ -132,6 +136,9 @@ namespace Minimal_chat_application
 
 
             app.MapControllers();
+            // chatHub for realtime chat
+            app.MapHub<ChatHub>("/chatHub");
+
 
             app.Run();
         }
