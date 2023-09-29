@@ -2,10 +2,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
+using MinimalChat.API.Hubs;
 using System;
 using System.Globalization;
 using System.Linq;
@@ -21,11 +23,13 @@ namespace Minimal_chat_application.Controllers
     {
         private readonly UserManager<User> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly IHubContext<ChatHub> _hubContext;
 
-        public MessageController(UserManager<User> userManager, ApplicationDbContext context)
+        public MessageController(UserManager<User> userManager, ApplicationDbContext context, IHubContext<ChatHub> hubContext)
         {
             _userManager = userManager;
             _context = context;
+            _hubContext = hubContext;
         }
 
         [HttpPost("SendMessages")]
@@ -58,8 +62,13 @@ namespace Minimal_chat_application.Controllers
                 Timestamp = DateTime.Now
             };
 
+            // Broadcast the message via SignalR
+            
+
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
+            message.Id = message.Id;
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", message);
 
             return Ok(new
             {
@@ -97,6 +106,10 @@ namespace Minimal_chat_application.Controllers
 
             // Save the changes to the database.
             await _context.SaveChangesAsync();
+
+            // Broadcast the message via SignalR
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", loginUserId, editMessageModel.Content);
+
 
             return Ok(new
             {
@@ -138,6 +151,10 @@ namespace Minimal_chat_application.Controllers
             // Remove the message from the database.
             _context.Messages.Remove(message);
             await _context.SaveChangesAsync();
+
+            // Broadcast the message via SignalR
+            await _hubContext.Clients.All.SendAsync("ReceiveMessage", messageId, loginUserId);
+
 
             return Ok(new
             {
@@ -228,5 +245,43 @@ namespace Minimal_chat_application.Controllers
             return Ok(response);
         }
 
+
+        [HttpGet("SearchConversations")]
+        [Authorize]
+        public async Task<IActionResult> SearchConversations([FromQuery] string query)
+        {
+            // Get the current user's ID from the token
+            var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                return BadRequest(new { error = "Invalid query parameter" });
+            }
+
+            // Define the query for searching messages
+            var queryNormalized = query.ToLowerInvariant(); // Normalize query for case-insensitive search
+            var messages = await _context.Messages
+                .Where(m => (m.SenderId == currentUserId || m.ReceiverId == currentUserId) && m.Content.ToLower().Contains(queryNormalized))
+                .OrderByDescending(m => m.Timestamp)
+                .ToListAsync();
+
+            // Prepare the response
+            var response = new
+            {
+                messages = messages.Select(m => new
+                {
+                    id = m.Id,
+                    senderId = m.SenderId,
+                    receiverId = m.ReceiverId,
+                    content = m.Content,
+                    timestamp = m.Timestamp
+                })
+            };
+
+            return Ok(response);
+        }
+
+
     }
+
 }
