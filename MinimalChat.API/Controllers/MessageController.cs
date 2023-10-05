@@ -63,7 +63,7 @@ namespace Minimal_chat_application.Controllers
             };
 
             // Broadcast the message via SignalR
-            
+
 
             _context.Messages.Add(message);
             await _context.SaveChangesAsync();
@@ -108,7 +108,7 @@ namespace Minimal_chat_application.Controllers
             await _context.SaveChangesAsync();
 
             // Broadcast the message via SignalR
-            await _hubContext.Clients.All.SendAsync("ReceiveMessage", loginUserId, editMessageModel.Content);
+            await _hubContext.Clients.All.SendAsync("EditMessage", messageId, editMessageModel.Content);
 
 
             return Ok(new
@@ -133,7 +133,7 @@ namespace Minimal_chat_application.Controllers
 
             if (message.SenderId != loginUserId)
             {
-                    return Unauthorized(new { error = "Unauthorized access - Try to delete message send by you not others" });
+                return Unauthorized(new { error = "Unauthorized access - Try to delete message send by you not others" });
             }
 
             if (message == null)
@@ -153,7 +153,7 @@ namespace Minimal_chat_application.Controllers
             await _context.SaveChangesAsync();
 
             // Broadcast the message via SignalR
-            await _hubContext.Clients.All.SendAsync("ReceiveMessage", messageId, loginUserId);
+            await _hubContext.Clients.All.SendAsync("DeleteMesage", messageId);
 
 
             return Ok(new
@@ -169,7 +169,7 @@ namespace Minimal_chat_application.Controllers
         [FromQuery] string receiverId,
         [FromQuery] string? sort,
         [FromQuery] DateTime? time,
-        [FromQuery] int? count  
+        [FromQuery] int? count
 
         )
         {
@@ -185,13 +185,13 @@ namespace Minimal_chat_application.Controllers
 
             // Define the query for fetching messages
             var query = _context.Messages
-                .Where(m => (m.SenderId == currentUserId && m.ReceiverId == chattingUser.Id) 
-                            || (m.SenderId == chattingUser.Id && m.ReceiverId == currentUserId)    )
+                .Where(m => (m.SenderId == currentUserId && m.ReceiverId == chattingUser.Id)
+                            || (m.SenderId == chattingUser.Id && m.ReceiverId == currentUserId))
                 .AsQueryable();
 
 
             // Apply sorting based on timestamp
-            if (sort=="desc")
+            if (sort == "desc")
             {
                 query = query.OrderByDescending(m => m.Timestamp);
             }
@@ -211,7 +211,7 @@ namespace Minimal_chat_application.Controllers
             // Apply filtering based on the 'before' timestamp
             if (time.HasValue)
             {
-               
+
                 query = query.Where(m => m.Timestamp < istTime);
             }
             else
@@ -228,7 +228,7 @@ namespace Minimal_chat_application.Controllers
                             .OrderByDescending(m => m.Timestamp)
                             .Take(20)
                             .ToListAsync();
-            
+
             //Prepare response
             var response = new
             {
@@ -248,7 +248,7 @@ namespace Minimal_chat_application.Controllers
 
         [HttpGet("SearchConversations")]
         [Authorize]
-        public async Task<IActionResult> SearchConversations([FromQuery] string query)
+        public async Task<IActionResult> SearchConversations([FromQuery] string query, [FromQuery] string receiverId)
         {
             // Get the current user's ID from the token
             var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -261,7 +261,10 @@ namespace Minimal_chat_application.Controllers
             // Define the query for searching messages
             var queryNormalized = query.ToLowerInvariant(); // Normalize query for case-insensitive search
             var messages = await _context.Messages
-                .Where(m => (m.SenderId == currentUserId || m.ReceiverId == currentUserId) && m.Content.ToLower().Contains(queryNormalized))
+                .Where(m =>
+                    ((m.SenderId == currentUserId && m.ReceiverId == receiverId)
+                    || (m.SenderId == receiverId && m.ReceiverId == currentUserId))
+                    && m.Content.ToLower().Contains(queryNormalized))
                 .OrderByDescending(m => m.Timestamp)
                 .ToListAsync();
 
