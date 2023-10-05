@@ -24,7 +24,7 @@ namespace MinimalChat.API.Hubs
             try
             {
                 // Your message handling logic
-                await Clients.All.SendAsync("EditMessage", content,id);
+                await Clients.All.SendAsync("EditMessage", id,content);
             }
             catch (Exception ex)
             {
