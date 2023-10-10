@@ -27,4 +27,8 @@
     <ProjectReference Include="..\MinimalChat.Domain\MinimalChat.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Repository\" />
+  </ItemGroup>
+
 </Project>
