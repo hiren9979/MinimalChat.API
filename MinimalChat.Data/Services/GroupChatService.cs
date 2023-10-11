@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
+using MinimalChat.Domain.DTO;
 using MinimalChat.Domain.Interface;
 using MinimalChat.Domain.Model;
 using System;
@@ -14,25 +15,32 @@ namespace MinimalChat.Data.Services
 {
     public  class GroupChatService : IGroupChat
     {
+        private readonly UserManager<User> _userManager;
         private readonly ApplicationDbContext _dbContext;
 
-        public GroupChatService(ApplicationDbContext context)
+        public GroupChatService(ApplicationDbContext context,UserManager<User> userManager)
         {
             _dbContext = context;
+            _userManager = userManager;
         }
 
-        public async Task<GroupChat> CreateGroupChat(GroupChat model)
+        public async Task<GroupChat> CreateGroupChat(GroupChatDTO model)
         {
+
+            //var creatorUser = await _userManager.FindByIdAsync(model.CreatorUserId);
+            //if (creatorUser == null)
+            //{
+            //    Console.WriteLine("The creator user does not exist.");
+            //    return null;
+            //}
             // Create a new GroupChatModel instance
             var newGroupChat = new GroupChat
             {
-                // Populate the properties of the new group chat
                 Name = model.Name,
-                MemberIds = new List<int> { model.CreatorUserId } // Include the creator as a member
-                // You can set other properties as needed
+                CreatorUserId = model.CreatorUserId, // Set the creator user
+                Id = model.Id
             };
 
-            // Add the new group chat to the DbSet in your DbContext
             _dbContext.GroupChats.Add(newGroupChat);
             _dbContext.SaveChanges();
 

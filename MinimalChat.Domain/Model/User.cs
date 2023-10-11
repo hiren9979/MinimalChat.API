@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using MinimalChat.Domain.Model;
 
 namespace Minimal_chat_application.Model
 {
@@ -7,5 +8,7 @@ namespace Minimal_chat_application.Model
 
         public string FirstName { get; set; }
         public string LastName { get; set; }
+
+        public virtual ICollection<GroupMember>? GroupMembers { get; set; }
     }
 }

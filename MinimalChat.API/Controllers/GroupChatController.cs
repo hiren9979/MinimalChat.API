@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using MinimalChat.Data.Services;
+using MinimalChat.Domain.DTO;
 using MinimalChat.Domain.Model;
 
 namespace MinimalChat.API.Controllers
@@ -17,7 +18,7 @@ namespace MinimalChat.API.Controllers
         }
 
         [HttpPost]
-        public IActionResult CreateGroupChat([FromBody] GroupChat model)
+        public IActionResult CreateGroupChat([FromBody] GroupChatDTO model)
         {
             var createdGroupChat = _groupChatService.CreateGroupChat(model);
             return Ok(createdGroupChat);

@@ -5,11 +5,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MinimalChat.Domain.Model;
+using MinimalChat.Domain.DTO;
 
 namespace MinimalChat.Domain.Interface
 {
     public interface IGroupChat
     {
-        Task<GroupChat> CreateGroupChat(GroupChat groupChatCreateModel);
+        Task<GroupChat> CreateGroupChat(GroupChatDTO groupChatCreateModel);
     }
 }

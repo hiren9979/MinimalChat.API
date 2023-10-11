@@ -11,6 +11,7 @@ using Minimal_chat_application.Model;
 using MinimalChat.API.Hubs;
 using MinimalChat.API;
 using System.Text;
+using MinimalChat.Data.Services;
 
 namespace Minimal_chat_application
 {
@@ -25,6 +26,7 @@ namespace Minimal_chat_application
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddScoped<GroupChatService>();
             // Define and configure Swagger documentation settings for API.
             builder.Services.AddSwaggerGen(option =>
             {
