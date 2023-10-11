@@ -25,21 +25,18 @@ namespace Minimal_chat_application.Context
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<GroupMember>()
+                .HasKey(gm => new { gm.GroupChatId, gm.UserId });
 
-            modelBuilder.Entity<GroupChat>()
-               .HasMany(gc => gc.Members)
-               .WithMany(gm => gm.GroupChat)
-               .UsingEntity<Dictionary<string, object>>(
-                   "GroupMemberJoin",
-                   j => j.HasOne<GroupMember>().WithMany(),
-                   j => j.HasOne<GroupChat>().WithMany(),
-                   j =>
-                   {
-                       j.HasKey("GroupId", "UserId");
-                       j.ToTable("GroupMembers"); // Name of the junction table
-                   });
+            modelBuilder.Entity<GroupMember>()
+                .HasOne(gm => gm.GroupChat)
+                .WithMany(gc => gc.GroupMembers)
+                .HasForeignKey(gm => gm.GroupChatId);
 
-            // Other configurations for your entities...
+            modelBuilder.Entity<GroupMember>()
+                .HasOne(gm => gm.User)
+                .WithMany(u => u.GroupMembers)
+                .HasForeignKey(gm => gm.UserId);
         }
     }
 

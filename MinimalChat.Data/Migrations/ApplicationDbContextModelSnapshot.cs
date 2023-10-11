@@ -155,6 +155,42 @@ namespace MinimalChat.Data.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("MinimalChat.Domain.Model.GroupChat", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("CreatorUserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("GroupChats");
+                });
+
+            modelBuilder.Entity("MinimalChat.Domain.Model.GroupMember", b =>
+                {
+                    b.Property<string>("GroupChatId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<bool>("IsAdmin")
+                        .HasColumnType("bit");
+
+                    b.HasKey("GroupChatId", "UserId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("GroupMembers");
+                });
+
             modelBuilder.Entity("Minimal_chat_application.Model.LogModel", b =>
                 {
                     b.Property<int>("Id")
@@ -195,6 +231,9 @@ namespace MinimalChat.Data.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("GroupChatId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.Property<string>("ReceiverId")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -207,6 +246,8 @@ namespace MinimalChat.Data.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("GroupChatId");
 
                     b.ToTable("Messages");
                 });
@@ -333,6 +374,44 @@ namespace MinimalChat.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("MinimalChat.Domain.Model.GroupMember", b =>
+                {
+                    b.HasOne("MinimalChat.Domain.Model.GroupChat", "GroupChat")
+                        .WithMany("GroupMembers")
+                        .HasForeignKey("GroupChatId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Minimal_chat_application.Model.User", "User")
+                        .WithMany("GroupMembers")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GroupChat");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Minimal_chat_application.Model.Message", b =>
+                {
+                    b.HasOne("MinimalChat.Domain.Model.GroupChat", null)
+                        .WithMany("Messages")
+                        .HasForeignKey("GroupChatId");
+                });
+
+            modelBuilder.Entity("MinimalChat.Domain.Model.GroupChat", b =>
+                {
+                    b.Navigation("GroupMembers");
+
+                    b.Navigation("Messages");
+                });
+
+            modelBuilder.Entity("Minimal_chat_application.Model.User", b =>
+                {
+                    b.Navigation("GroupMembers");
                 });
 #pragma warning restore 612, 618
         }
