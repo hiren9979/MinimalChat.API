@@ -23,6 +23,14 @@ namespace MinimalChat.API.Controllers
         public IActionResult CreateGroupChat([FromBody] GroupChatDTO model)
         {
             var createdGroupChat = _groupChatService.CreateGroupChat(model);
+
+            if (createdGroupChat.Result == null)
+            {
+                // Handle the case when an error occurred during group chat creation.
+                return Conflict("A group chat with the same ID or name already exists.");
+                
+            }
+
             return Ok(createdGroupChat);
         }
 

@@ -29,18 +29,20 @@ namespace MinimalChat.Data.Services
         public async Task<GroupChat> CreateGroupChat(GroupChatDTO model)
         {
 
-            //var creatorUser = await _userManager.FindByIdAsync(model.CreatorUserId);
-            //if (creatorUser == null)
-            //{
-            //    Console.WriteLine("The creator user does not exist.");
-            //    return null;
-            //}
-            // Create a new GroupChatModel instance
+            // Generate a random and unique GroupId(GUID)
+            string uniqueGroupId = Guid.NewGuid().ToString();
+
+            // Check if a group chat with the generated GroupId already exists
+            if (_dbContext.GroupChats.Any(g => g.Id == uniqueGroupId) || _dbContext.GroupChats.Any(g => g.Name == model.Name))
+            {
+                return null; 
+            }
+
             var newGroupChat = new GroupChat
             {
                 Name = model.Name,
                 CreatorUserId = model.CreatorUserId, // Set the creator user
-                Id = model.Id
+                Id = uniqueGroupId
             };
 
             _dbContext.GroupChats.Add(newGroupChat);
