@@ -144,6 +144,59 @@ namespace MinimalChat.Data.Services
             return true;
         }
 
+        public async Task<GroupChat> RemoveGroupMembers(string groupId, List<string> memberIds, string adminUserId)
+        {
+            var groupChat = await _dbContext.GroupChats
+                .Include(g => g.GroupMembers)
+                .ThenInclude(gm => gm.User)
+                .FirstOrDefaultAsync(g => g.Id == groupId);
+
+            if (groupChat == null)
+            {
+                Console.WriteLine("GroupId is Null. Please provide a valid GroupId to identify the group.");
+                return null;
+            }
+
+            // Check if the user making the request is an admin of the group
+            var isAdmin = groupChat.GroupMembers.Any(member => member.User.Id == adminUserId && member.IsAdmin);
+
+            if (!isAdmin)
+            {
+                Console.WriteLine($"User {adminUserId} is not an admin of the group and cannot remove members.");
+                return null;
+            }
+
+            // Retrieve the users based on their IDs
+            var membersToRemove = await _userManager.Users.Where(u => memberIds.Contains(u.Id)).ToListAsync();
+
+            if (membersToRemove.Any())
+            {
+                // Remove the selected users from the group
+                foreach (var user in membersToRemove)
+                {
+                    var groupMember = groupChat.GroupMembers.FirstOrDefault(member => member.User.Id == user.Id);
+
+                    if (groupMember != null)
+                    {
+                        groupChat.GroupMembers.Remove(groupMember);
+                    }
+                    else
+                    {
+                        Console.WriteLine($"User {user.Id} is not a member of the group.");
+                        // Handle the case when a user is not a member (e.g., return an error or throw an exception).
+                    }
+                }
+
+                await _dbContext.SaveChangesAsync();
+
+                return groupChat;
+            }
+
+            // Handle the case when no valid members were found (e.g., return an error or throw an exception).
+            return null;
+        }
+
+
 
     }
 }
