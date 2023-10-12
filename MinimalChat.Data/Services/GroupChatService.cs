@@ -109,5 +109,24 @@ namespace MinimalChat.Data.Services
             return null;
         }
 
+        public async Task<GroupChat> EditGroupName(UpdateGroupNameDTO model)
+        {
+                var groupChat =  _dbContext.GroupChats.FirstOrDefault(g => g.Id == model.GroupId);
+                if (groupChat == null)
+                {
+                    return null;
+                }
+
+                // Update the group name
+                groupChat.Name = model.UpdatedGroupName;
+
+                // Save the changes to the database
+                await _dbContext.SaveChangesAsync();
+
+                return groupChat;
+            
+        }
+
+
     }
 }

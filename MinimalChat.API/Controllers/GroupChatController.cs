@@ -62,5 +62,22 @@ namespace MinimalChat.API.Controllers
             return Ok(serializedGroupChat);
         }
 
+        [HttpPut("{groupId}/editGroupName")]
+        public async Task<IActionResult> EditGroupNameAsync([FromBody] UpdateGroupNameDTO model)
+        {
+
+            var updatedGroupChat = await _groupChatService.EditGroupName(model);
+
+
+            if (updatedGroupChat == null)
+            {
+                // Handle the case when the group chat doesn't exist or the update fails.
+                return NotFound("Group chat not found or update failed.");
+            }
+
+            return Ok(updatedGroupChat);
+        }
+
+
     }
 }
