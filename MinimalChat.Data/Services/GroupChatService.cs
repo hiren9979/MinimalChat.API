@@ -127,6 +127,23 @@ namespace MinimalChat.Data.Services
             
         }
 
+        public async Task<bool> DeleteGroupAsync(string groupId)
+        {
+            var groupChat = await _dbContext.GroupChats.FirstOrDefaultAsync(g => g.Id == groupId);
+
+            if (groupChat == null)
+            {
+                Console.WriteLine("Group not found.");
+                return false;
+            }
+
+            // Remove the group chat from the database
+            _dbContext.GroupChats.Remove(groupChat);
+            await _dbContext.SaveChangesAsync();
+
+            return true;
+        }
+
 
     }
 }

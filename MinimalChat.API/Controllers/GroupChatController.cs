@@ -78,6 +78,18 @@ namespace MinimalChat.API.Controllers
             return Ok(updatedGroupChat);
         }
 
+        [HttpDelete("{groupId}")]
+        public async Task<IActionResult> DeleteGroup(string groupId)
+        {
+            var deleted = await _groupChatService.DeleteGroupAsync(groupId);
+
+            if (deleted)
+            {
+                return Ok(new { message = "Group deleted successfully" }); // 200 OK with a custom message
+            }
+
+            return NotFound(new { error = "Group not found" }); // 404 Not Found with an error message
+        }
 
     }
 }
