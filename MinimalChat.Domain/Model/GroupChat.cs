@@ -12,6 +12,7 @@ namespace MinimalChat.Domain.Model
         public string Name { get; set; }
 
         // Navigation property for GroupMembers
+
         public ICollection<GroupMember>? GroupMembers { get; set; } // Use List instead of ICollection
 
         public string CreatorUserId { get; set; }

@@ -91,5 +91,24 @@ namespace MinimalChat.API.Controllers
             return NotFound(new { error = "Group not found" }); // 404 Not Found with an error message
         }
 
+        [HttpDelete("{groupId}/remove-members")]
+        public async Task<IActionResult> RemoveGroupMembers(string groupId, [FromBody] RemoveGroupMembersDTO removeMembersDTO)
+        {
+            var groupChat = await _groupChatService.RemoveGroupMembers(groupId, removeMembersDTO.MemberIds, removeMembersDTO.AdminUserId);
+
+            if (groupChat != null)
+            {
+                var options = new JsonSerializerOptions
+                {
+                    ReferenceHandler = ReferenceHandler.Preserve
+                };
+
+                return Ok(JsonSerializer.Serialize(groupChat, options));
+            }
+
+            return NotFound(new { error = "Error while remove member from group" }); // You may want to return an error response here.
+        }
+
+
     }
 }
