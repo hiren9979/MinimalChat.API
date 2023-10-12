@@ -10,7 +10,6 @@ namespace MinimalChat.Domain.DTO
     public class GroupChatDTO
     {
       
-        public string? Id { get; set; }
         public string Name { get; set; }
 
         public string CreatorUserId { get; set; }
