@@ -5,6 +5,8 @@ using MinimalChat.Domain.DTO;
 using MinimalChat.Domain.Model;
 using System.Text.Json.Serialization;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace MinimalChat.API.Controllers
 {
@@ -20,47 +22,57 @@ namespace MinimalChat.API.Controllers
         }
 
         [HttpPost("CreateGroup")]
-        public IActionResult CreateGroupChat([FromBody] GroupChatDTO model)
+        public async Task<IActionResult> CreateGroupChat([FromBody] GroupChatDTO model)
         {
-            var createdGroupChat = _groupChatService.CreateGroupChat(model);
-
-            if (createdGroupChat.Result == null)
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            try
             {
-                // Handle the case when an error occurred during group chat creation.
-                return Conflict("A group chat with the same ID or name already exists.");
-                
-            }
+                var createdGroupChat = await _groupChatService.CreateGroupChat(model, currentUserId);
 
-            return Ok(createdGroupChat);
+                if (createdGroupChat == null)
+                {
+                    return Conflict("A group chat with the same ID or name already exists.");
+                }
+
+                return Ok(createdGroupChat);
+            }
+            catch (Exception ex)
+            {
+                // Log the exception for debugging purposes
+                Console.WriteLine(ex);
+
+                // Return an appropriate error response
+                return StatusCode(500, "An internal server error occurred.");
+            }
         }
 
         [HttpPost("{groupId}/add-members")]
-        public async Task<IActionResult> AddGroupMembers(string groupId, [FromBody] List<string> memberIds)
-        {
-            var updatedGroupChat = await _groupChatService.AddGroupMembers(groupId, memberIds);
+        //public async Task<IActionResult> AddGroupMembers(string groupId, [FromBody] List<string> memberIds)
+        //{
+        //    var updatedGroupChat = await _groupChatService.AddGroupMembers(groupId, memberIds,currentUserId);
 
-            if (updatedGroupChat == null)
-            {
-                Console.WriteLine("User is already exist in this group");
-                return BadRequest("User is already a member of this group.");
+        //    if (updatedGroupChat == null)
+        //    {
+        //        Console.WriteLine("User is already exist in this group");
+        //        return BadRequest("User is already a member of this group.");
 
-            }
-            else
-            {
-                Console.WriteLine("Successfully Added !!!");
-            }
+        //    }
+        //    else
+        //    {
+        //        Console.WriteLine("Successfully Added !!!");
+        //    }
 
-            // Use JsonSerializerOptions with ReferenceHandler.Preserve to handle object cycles
-            var options = new JsonSerializerOptions
-            {
-                ReferenceHandler = ReferenceHandler.Preserve
-            };
+        //    // Use JsonSerializerOptions with ReferenceHandler.Preserve to handle object cycles
+        //    var options = new JsonSerializerOptions
+        //    {
+        //        ReferenceHandler = ReferenceHandler.Preserve
+        //    };
 
-            // Serialize the group chat with the Preserve reference handling
-            var serializedGroupChat = JsonSerializer.Serialize(updatedGroupChat, options);
+        //    // Serialize the group chat with the Preserve reference handling
+        //    var serializedGroupChat = JsonSerializer.Serialize(updatedGroupChat, options);
 
-            return Ok(serializedGroupChat);
-        }
+        //    return Ok(serializedGroupChat);
+        //}
 
         [HttpPut("{groupId}/editGroupName")]
         public async Task<IActionResult> EditGroupNameAsync([FromBody] UpdateGroupNameDTO model)
@@ -107,6 +119,34 @@ namespace MinimalChat.API.Controllers
             }
 
             return NotFound(new { error = "Error while remove member from group" }); // You may want to return an error response here.
+        }
+
+        [HttpGet("GetAllGroups")]
+        [Authorize]
+        public async Task<IActionResult> GetAllGroups()
+        {
+            try
+            {
+                var groups = await _groupChatService.GetAllGroupsAsync();
+                if (groups != null)
+                {
+                    var groupData = groups.Select(group => new
+                    {
+                        Id = group.Id,
+                        Name = group.Name,
+                        CreatorUserId = group.CreatorUserId,
+                        // Add other properties as needed
+                    }).ToList();
+
+                    return Ok(groupData);
+                }
+
+                return NotFound(new { error = "No groups found" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while processing your request" });
+            }
         }
 
 

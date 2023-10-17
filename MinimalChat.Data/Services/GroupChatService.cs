@@ -12,46 +12,96 @@ using System.Text;
 using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Security.Claims;
 
 namespace MinimalChat.Data.Services
 {
-    public  class GroupChatService : IGroupChat
+    public class GroupChatService : IGroupChat
     {
         private readonly UserManager<User> _userManager;
         private readonly ApplicationDbContext _dbContext;
 
-        public GroupChatService(ApplicationDbContext context,UserManager<User> userManager)
+        public GroupChatService(ApplicationDbContext context, UserManager<User> userManager)
         {
             _dbContext = context;
             _userManager = userManager;
         }
 
-        public async Task<GroupChat> CreateGroupChat(GroupChatDTO model)
+        public async Task<GroupDTO> CreateGroupChat(GroupChatDTO model, string currentUserId)
         {
-
             // Generate a random and unique GroupId(GUID)
             string uniqueGroupId = Guid.NewGuid().ToString();
 
             // Check if a group chat with the generated GroupId already exists
             if (_dbContext.GroupChats.Any(g => g.Id == uniqueGroupId) || _dbContext.GroupChats.Any(g => g.Name == model.Name))
             {
-                return null; 
+                return null;
             }
+
+
 
             var newGroupChat = new GroupChat
             {
                 Name = model.Name,
-                CreatorUserId = model.CreatorUserId, // Set the creator user
-                Id = uniqueGroupId
+                CreatorUserId = model.CreatorUserId,
+                Id = uniqueGroupId,
+               
+
+            };
+            newGroupChat.GroupMembers = new List<GroupMember>
+            {
+                new GroupMember
+                {
+                    UserId = model.CreatorUserId,
+                    IsAdmin = true
+                }
             };
 
-            _dbContext.GroupChats.Add(newGroupChat);
-            _dbContext.SaveChanges();
+            await _dbContext.GroupChats.AddAsync(newGroupChat);
 
-            return newGroupChat;
+
+            // Check if there are user IDs to add as members (you can keep this part for additional members)
+            if (model.SelectedUserIds != null && model.SelectedUserIds.Any())
+            {
+                // Add the selected users as group members
+                foreach (var userId in model.SelectedUserIds)
+                {
+                    if (!newGroupChat.GroupMembers.Any(gm => gm.UserId == userId))
+                    {
+                        var groupMember = new GroupMember
+                        {
+                            UserId = userId,
+                            GroupChatId = newGroupChat.Id, // Set the GroupChatId
+                            IsAdmin = userId == currentUserId
+                        };
+                        newGroupChat.GroupMembers.Add(groupMember);
+                    }
+                }
+            }
+
+            var groupdto = new GroupDTO
+            {
+                Id = uniqueGroupId,
+                Name = model.Name,
+            };
+
+            try
+            {
+                await _dbContext.GroupChats.AddAsync(newGroupChat);
+                await _dbContext.SaveChangesAsync();
+
+                return groupdto;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                throw;
+            }
+         
         }
 
-        public async Task<GroupChat> AddGroupMembers(string groupId, List<string> memberIds)
+
+        public async Task<GroupChat> AddGroupMembers(string groupId, List<string> memberIds, string currentUserId)
         {
             // Get the group chat by its ID and eagerly load the GroupMembers and associated User entities
             var groupChat = await _dbContext.GroupChats
@@ -59,7 +109,7 @@ namespace MinimalChat.Data.Services
                 .ThenInclude(gm => gm.User)
                 .FirstOrDefaultAsync(g => g.Id == groupId);
 
-
+            memberIds.Add(currentUserId);
 
             if (groupChat == null)
             {
@@ -69,44 +119,45 @@ namespace MinimalChat.Data.Services
             }
 
             // Retrieve the users based on their IDs
-            var membersToAdd = await _userManager.Users.Where(u => memberIds.Contains(u.Id)).ToListAsync();
 
-            if (membersToAdd.Any())
+            // Add the selected users as group members
+            foreach (var user in memberIds)
             {
-                // Add the selected users as group members
-                foreach (var user in membersToAdd)
+                if (user != null)
                 {
-                    if (user != null)
+
+                    if (groupChat.GroupMembers == null)
                     {
-                        if (!groupChat.GroupMembers.Any(member => member.User.Id == user.Id))
-                        {
-                            if (groupChat.GroupMembers == null)
-                            {
-                                groupChat.GroupMembers = new List<GroupMember>();
-                            }
-
-                            groupChat.GroupMembers.Add(new GroupMember
-                            {
-                                User = user,
-                                IsAdmin = false // You can set this value as needed
-                            });
-                        }
-                        else
-                        {
-                            Console.WriteLine($"User {user.Id} is already a member of the group.");
-                            // Handle the case when a user is already a member (e.g., return an error or throw an exception).
-                            return null; // You may want to return an error response here.
-                        }
+                        groupChat.GroupMembers = new List<GroupMember>();
                     }
+
+                    bool isAdmin = user == currentUserId;
+
+                    groupChat.GroupMembers.Add(new GroupMember
+                    {
+                        GroupChatId = groupId,
+                        UserId = user,
+                        IsAdmin = isAdmin // You can set this value as needed
+                    });
                 }
-
-                await _dbContext.SaveChangesAsync();
-
-                return groupChat;
+                else
+                {
+                    return null; // You may want to return an error response here.
+                }
             }
 
-            // Handle the case when no valid members were found (e.g., return an error or throw an exception).
-            return null;
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+                return groupChat;
+
+            }
+            catch(Exception ex)
+            {
+                throw ex;
+            }
+
+       
         }
 
         public async Task<GroupChat> EditGroupName(UpdateGroupNameDTO model)
@@ -194,6 +245,21 @@ namespace MinimalChat.Data.Services
 
             // Handle the case when no valid members were found (e.g., return an error or throw an exception).
             return null;
+        }
+
+        public async Task<List<GroupChat>> GetAllGroupsAsync()
+        {
+            try
+            {
+                // Fetch all groups from the database
+                var groups = await _dbContext.GroupChats.ToListAsync();
+                return groups;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                throw;
+            }
         }
 
 
