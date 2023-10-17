@@ -13,5 +13,7 @@ namespace MinimalChat.Domain.DTO
         public string Name { get; set; }
 
         public string CreatorUserId { get; set; }
+
+        public string[] SelectedUserIds { get; set; }
     }
 }

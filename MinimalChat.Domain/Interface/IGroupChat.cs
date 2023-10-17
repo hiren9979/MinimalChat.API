@@ -11,6 +11,6 @@ namespace MinimalChat.Domain.Interface
 {
     public interface IGroupChat
     {
-        Task<GroupChat> CreateGroupChat(GroupChatDTO groupChatCreateModel);
+        Task<GroupDTO> CreateGroupChat(GroupChatDTO groupChatCreateModel, string currentUserId);
     }
 }

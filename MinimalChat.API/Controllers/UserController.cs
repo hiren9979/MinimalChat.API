@@ -168,7 +168,11 @@ namespace Minimal_chat_application.Controllers
         [Authorize]
         public IActionResult GetUsers()
         {
+            // Get the ID of the currently authenticated user
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
             var users = _context.Users
+                .Where(u => u.Id != currentUserId) // Exclude the currently authenticated user
                 .Select(u => new User
                 {
                     Id = u.Id,
@@ -179,11 +183,12 @@ namespace Minimal_chat_application.Controllers
 
             if (users.Count == 0)
             {
-                return NotFound(new { error = "No users found" });
+                return NotFound(new { error = "No other users found" });
             }
 
             return Ok(new { users });
         }
+
 
         //Generate jwt token
         private string GenerateJwtToken(User user)
