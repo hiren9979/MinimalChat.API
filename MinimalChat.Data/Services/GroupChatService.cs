@@ -13,6 +13,7 @@ using System.Text.Json.Serialization;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Security.Claims;
+using Microsoft.EntityFrameworkCore.Infrastructure.Internal;
 
 namespace MinimalChat.Data.Services
 {
@@ -262,6 +263,30 @@ namespace MinimalChat.Data.Services
             }
         }
 
+        public async Task<List<GroupMemberDTO>> GetGroupMembersAsync(string groupId)
+        {
+            var groupChat = await _dbContext.GroupChats
+                .Include(g => g.GroupMembers)
+                .ThenInclude(gm => gm.User)
+                .FirstOrDefaultAsync(g => g.Id == groupId);
+
+            if (groupChat == null)
+            {
+                return null; // You may want to return an error response here.
+            }
+
+            if (groupChat.GroupMembers != null)
+            {
+                return groupChat.GroupMembers.Select(gm => new GroupMemberDTO
+                {
+                    UserId = gm.User.Id,
+                    UserName = gm.User.UserName,
+                    IsAdmin = gm.IsAdmin
+                }).ToList();
+            }
+
+            return new List<GroupMemberDTO>();
+        }
 
 
     }

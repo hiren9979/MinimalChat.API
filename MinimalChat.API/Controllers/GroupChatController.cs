@@ -46,36 +46,38 @@ namespace MinimalChat.API.Controllers
             }
         }
 
-        [HttpPost("{groupId}/add-members")]
-        //public async Task<IActionResult> AddGroupMembers(string groupId, [FromBody] List<string> memberIds)
-        //{
-        //    var updatedGroupChat = await _groupChatService.AddGroupMembers(groupId, memberIds,currentUserId);
+        [HttpPost("AddGroupMembers")]
+        public async Task<IActionResult> AddGroupMembers(string groupId, [FromBody] List<string> memberIds)
+        {
+            var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-        //    if (updatedGroupChat == null)
-        //    {
-        //        Console.WriteLine("User is already exist in this group");
-        //        return BadRequest("User is already a member of this group.");
+            var updatedGroupChat = await _groupChatService.AddGroupMembers(groupId, memberIds, currentUserId);
 
-        //    }
-        //    else
-        //    {
-        //        Console.WriteLine("Successfully Added !!!");
-        //    }
+            if (updatedGroupChat == null)
+            {
+                Console.WriteLine("User is already exist in this group");
+                return BadRequest("User is already a member of this group.");
 
-        //    // Use JsonSerializerOptions with ReferenceHandler.Preserve to handle object cycles
-        //    var options = new JsonSerializerOptions
-        //    {
-        //        ReferenceHandler = ReferenceHandler.Preserve
-        //    };
+            }
+            else
+            {
+                Console.WriteLine("Successfully Added !!!");
+            }
 
-        //    // Serialize the group chat with the Preserve reference handling
-        //    var serializedGroupChat = JsonSerializer.Serialize(updatedGroupChat, options);
+            // Use JsonSerializerOptions with ReferenceHandler.Preserve to handle object cycles
+            var options = new JsonSerializerOptions
+            {
+                ReferenceHandler = ReferenceHandler.Preserve
+            };
 
-        //    return Ok(serializedGroupChat);
-        //}
+            // Serialize the group chat with the Preserve reference handling
+            var serializedGroupChat = JsonSerializer.Serialize(updatedGroupChat, options);
 
-        [HttpPut("{groupId}/editGroupName")]
-        public async Task<IActionResult> EditGroupNameAsync([FromBody] UpdateGroupNameDTO model)
+            return Ok(serializedGroupChat);
+        }
+
+        [HttpPut("editGroupName")]
+        public async Task<IActionResult> EditGroupNameAsync([FromQuery] UpdateGroupNameDTO model)
         {
 
             var updatedGroupChat = await _groupChatService.EditGroupName(model);
@@ -86,7 +88,7 @@ namespace MinimalChat.API.Controllers
                 // Handle the case when the group chat doesn't exist or the update fails.
                 return NotFound("Group chat not found or update failed.");
             }
-
+                
             return Ok(updatedGroupChat);
         }
 
@@ -104,7 +106,7 @@ namespace MinimalChat.API.Controllers
         }
 
         [HttpDelete("{groupId}/remove-members")]
-        public async Task<IActionResult> RemoveGroupMembers(string groupId, [FromBody] RemoveGroupMembersDTO removeMembersDTO)
+        public async Task<IActionResult> RemoveGroupMembers(string groupId, [FromQuery] RemoveGroupMembersDTO removeMembersDTO)
         {
             var groupChat = await _groupChatService.RemoveGroupMembers(groupId, removeMembersDTO.MemberIds, removeMembersDTO.AdminUserId);
 
@@ -149,6 +151,35 @@ namespace MinimalChat.API.Controllers
             }
         }
 
+        [HttpGet("fetchGroupMembers")]
+        public async Task<IActionResult> GetGroupMembers(string groupId)
+        {
+            try
+            {
+                var groupMembers = await _groupChatService.GetGroupMembersAsync(groupId);
+
+                if (groupMembers != null)
+                {
+                    //var options = new JsonSerializerOptions
+                    //{
+                    //    ReferenceHandler = ReferenceHandler.Preserve,
+                    //    // Other options as needed
+                    //};
+
+                    //var json = JsonSerializer.Serialize(groupMembers, options);
+
+                    return Ok(groupMembers);
+                }
+                else
+                {
+                    return NotFound($"Group with ID {groupId} not found.");
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Internal Server Error: {ex.Message}");
+            }
+        }
 
     }
 }
