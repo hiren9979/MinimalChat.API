@@ -288,6 +288,78 @@ namespace MinimalChat.Data.Services
             return new List<GroupMemberDTO>();
         }
 
+        public async Task<GroupChat> MakeUserAdminInGroup(string groupId, string userId, string currentUserId)
+        {
+            // Get the group chat by its ID and eagerly load the GroupMembers
+            var groupChat = await _dbContext.GroupChats
+                .Include(g => g.GroupMembers)
+                .FirstOrDefaultAsync(g => g.Id == groupId);
 
-    }
+            if (groupChat == null)
+            {
+                Console.WriteLine("Group not found.");
+                return null;
+            }
+
+            // Check if the user making the request is an admin of the group
+            var isAdmin = groupChat.GroupMembers.Any(member => member.UserId == currentUserId && member.IsAdmin);
+
+            if (!isAdmin)
+            {
+                Console.WriteLine($"User {currentUserId} is not an admin of the group and cannot make others admin.");
+                return null;
+            }
+
+            // Find the user to be made an admin in the group members
+            var userToMakeAdmin = groupChat.GroupMembers.FirstOrDefault(member => member.UserId == userId);
+
+            if (userToMakeAdmin == null)
+            {
+                Console.WriteLine($"User {userId} is not a member of the group.");
+                return null;
+            }
+
+            // Update the user's admin status
+            userToMakeAdmin.IsAdmin = true;
+
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+                return groupChat;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                throw;
+            }
+        }
+
+        public async Task<List<GroupMemberDTO>> GetUsersNotInGroupAsync(string groupId)
+        {
+            // Assuming you have an Entity Framework DbContext called dbContext
+            try
+            {
+
+                // Retrieve all users who are not members of the specified group (groupId)
+                var usersNotInGroup = await _dbContext.Users
+                    .Where(user => !_dbContext.GroupMembers.Any(gm => gm.GroupChatId == groupId && gm.UserId == user.Id))
+                    .Select(user => new GroupMemberDTO
+                    {
+                        UserId = user.Id,
+                        UserName = user.UserName,
+                        IsAdmin = false
+                    })
+                    .ToListAsync();
+
+                return usersNotInGroup;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+                throw;
+            }
+            }
+
+
+        }
 }
