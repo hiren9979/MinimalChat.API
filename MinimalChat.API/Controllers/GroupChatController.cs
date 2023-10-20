@@ -88,7 +88,7 @@ namespace MinimalChat.API.Controllers
                 // Handle the case when the group chat doesn't exist or the update fails.
                 return NotFound("Group chat not found or update failed.");
             }
-                
+
             return Ok(updatedGroupChat);
         }
 
@@ -181,5 +181,54 @@ namespace MinimalChat.API.Controllers
             }
         }
 
+        [HttpPost("{groupId}/makeUserAdmin")]
+        [Authorize]
+        public async Task<IActionResult> MakeUserAdminInGroup(string groupId, [FromQuery] string userId)
+        {
+            try
+            {
+                // Retrieve the current user's ID (you can use your authentication mechanism)
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                var result = await _groupChatService.MakeUserAdminInGroup(groupId, userId, currentUserId);
+
+                if (result == null)
+                {
+                    return BadRequest(new { error = "Failed to make the user admin" });
+                }
+
+                return Ok(new { message = "User made admin successfully" });
+            }
+            catch (Exception ex)
+            {
+                // Log the exception
+                return StatusCode(500, new { error = "An error occurred while making the user admin" });
+            }
+        }
+
+        [HttpGet("{groupId}/GetUsersNotInGroup")]
+        [Authorize]
+        public async Task<IActionResult> GetUsersNotInGroup(string groupId)
+        {
+            try
+            {
+                // Call the service method to get users not in the group
+                var usersNotInGroup = await _groupChatService.GetUsersNotInGroupAsync(groupId);
+
+                // Return only UserId and UserName
+                var userDTOs = usersNotInGroup.Select(user => new
+                {
+                    UserId = user.UserId,
+                    UserName = user.UserName,
+                }).ToList();
+
+                return Ok(userDTOs);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "An error occurred while fetching users not in the group" });
+            }
+        }
     }
 }
+
