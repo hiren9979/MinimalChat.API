@@ -47,11 +47,11 @@ namespace MinimalChat.API.Controllers
         }
 
         [HttpPost("AddGroupMembers")]
-        public async Task<IActionResult> AddGroupMembers(string groupId, [FromBody] List<string> memberIds)
+        public async Task<IActionResult> AddGroupMembers([FromBody] AddMemberDTO addMemberDTO)
         {
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var updatedGroupChat = await _groupChatService.AddGroupMembers(groupId, memberIds, currentUserId);
+            var updatedGroupChat = await _groupChatService.AddGroupMembers(addMemberDTO.GroupId, addMemberDTO.MemberIds, currentUserId);
 
             if (updatedGroupChat == null)
             {
@@ -129,7 +129,10 @@ namespace MinimalChat.API.Controllers
         {
             try
             {
-                var groups = await _groupChatService.GetAllGroupsAsync();
+                // Retrieve the current user's ID (you can use your authentication mechanism)
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+                var groups = await _groupChatService.GetAllGroupsAsync(currentUserId);
                 if (groups != null)
                 {
                     var groupData = groups.Select(group => new
@@ -227,6 +230,39 @@ namespace MinimalChat.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { error = "An error occurred while fetching users not in the group" });
+            }
+        }
+
+        [HttpPost("SendMessageToGroupMembers")]
+        public async Task<IActionResult> SendMessageToGroupMembers([FromQuery] string GroupId, [FromQuery] string MessageText)
+        {
+            try
+            {
+                var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+               var message =  await _groupChatService.SendMessageToGroupMembers(GroupId,MessageText,currentUserId);
+                if (message != null)
+                {
+                    return Ok(new
+                    {
+                        newMessage = new
+                        {
+                            id = message.Id,
+                            senderId = message.SenderId,
+                            receiverId = message.ReceiverId,
+                            content = message.Content,
+                            timestamp = message.Timestamp
+                        }
+                    });
+                }
+                else
+                {
+                    return StatusCode(400, new { error = "Failed to send the message." });
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle any exceptions and return an appropriate error response.
+                return StatusCode(500, new { error = "An error occurred while sending messages." });
             }
         }
     }

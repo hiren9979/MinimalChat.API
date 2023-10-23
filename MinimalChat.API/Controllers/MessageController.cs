@@ -4,14 +4,17 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Microsoft.IdentityModel.Tokens;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
 using MinimalChat.API.Hubs;
+using MinimalChat.Domain.Model;
 using System;
 using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
 namespace Minimal_chat_application.Controllers
@@ -169,25 +172,42 @@ namespace Minimal_chat_application.Controllers
         [FromQuery] string receiverId,
         [FromQuery] string? sort,
         [FromQuery] DateTime? time,
-        [FromQuery] int? count
+        [FromQuery] int? count,
+        [FromQuery] Boolean isGroup
 
         )
         {
             // Get the current user's ID from the token
             var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
+            User chattingUser ;
+            string chattingUserId;
+            if (isGroup)
+            {
+                GroupChat g = await _context.GroupChats.FirstOrDefaultAsync(g => g.Id == receiverId);
+                chattingUserId = g.Id;
+              
+            }
+            else
+            {
+                chattingUser = await _userManager.FindByIdAsync(receiverId);
+                chattingUserId = chattingUser.Id;
+            }
+
             // Check if the specified user exists
-            var chattingUser = await _userManager.FindByIdAsync(receiverId);
-            if (chattingUser == null)
+            if (chattingUserId == null)
             {
                 return NotFound(new { error = "Receiver user not found" });
             }
 
-            // Define the query for fetching messages
-            var query = _context.Messages
-                .Where(m => (m.SenderId == currentUserId && m.ReceiverId == chattingUser.Id)
-                            || (m.SenderId == chattingUser.Id && m.ReceiverId == currentUserId))
-                .AsQueryable();
+            var query = isGroup
+                         ? _context.Messages
+                             .Where(m => m.ReceiverId == receiverId)
+                             .AsQueryable()
+                         : _context.Messages
+                             .Where(m => (m.SenderId == currentUserId && m.ReceiverId == chattingUserId)
+                                         || (m.SenderId == chattingUserId && m.ReceiverId == currentUserId))
+                             .AsQueryable();
 
 
             // Apply sorting based on timestamp
