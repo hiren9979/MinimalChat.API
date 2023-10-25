@@ -22,6 +22,8 @@ namespace Minimal_chat_application.Context
         public DbSet<GroupChat> GroupChats { get; set; }
         public DbSet<GroupMember> GroupMembers { get; set; }
 
+        public DbSet<TagUserMessage> TagUserMessage { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
