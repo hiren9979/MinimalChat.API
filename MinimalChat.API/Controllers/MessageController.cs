@@ -304,6 +304,52 @@ namespace Minimal_chat_application.Controllers
             return Ok(response);
         }
 
+        [HttpGet("TaggedMessages")]
+        public async Task<IActionResult> GetTaggedMessages()
+        {
+            // Get messages whose content starts with "[[]]"b
+            var taggedMessages = await _context.Messages
+                .Where(m => m.Content.StartsWith("[[]]"))
+                .OrderByDescending(m => m.Timestamp)
+                .ToListAsync();
+
+            // Collect distinct user ids from senderId and receiverId
+            var userIds = taggedMessages
+                .SelectMany(m => new[] { m.SenderId, m.ReceiverId })
+                .Distinct();
+
+            // Retrieve user details for the collected user ids
+            var users = await _userManager.Users
+                .Where(u => userIds.Contains(u.Id))
+                .ToDictionaryAsync(u => u.Id);
+
+            // Prepare the response
+            var response = new
+            {
+                messages = taggedMessages.Select(m => new
+                {
+                    id = m.Id,
+                    sender = users.ContainsKey(m.SenderId) ? new
+                    {
+                        id = users[m.SenderId].Id,
+                        userName = users[m.SenderId].UserName, // Change to the appropriate user property
+                        email = users[m.SenderId].Email
+                                                               // Add other user properties you want to include
+                    } : null,
+                    receiver = users.ContainsKey(m.ReceiverId) ? new
+                    {
+                        id = users[m.ReceiverId].Id,
+                        userName = users[m.ReceiverId].UserName, // Change to the appropriate user property
+                                                                 // Add other user properties you want to include
+                    } : null,
+                    content = m.Content,
+                    timestamp = m.Timestamp
+                })
+            };
+
+            return Ok(response);
+        }
+
 
     }
 
