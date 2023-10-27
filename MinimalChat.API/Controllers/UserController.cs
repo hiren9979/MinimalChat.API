@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Authentication.Google;
 using Google.Apis.Auth;
 using MinimalChat.API;
 using Microsoft.Extensions.Options;
+using MinimalChat.Data.Services;
 
 namespace Minimal_chat_application.Controllers
 {
@@ -28,10 +29,11 @@ namespace Minimal_chat_application.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IConfiguration _configuration;
         private readonly AppSettings _appSettings;
+        private readonly UserService _userService;
 
 
         public UserController(UserManager<User> userManager, SignInManager<User> signInManager, ApplicationDbContext context,
-            IConfiguration configuration, IOptions<AppSettings> applicationSetting
+            IConfiguration configuration, IOptions<AppSettings> applicationSetting,UserService userService
             )
         {
             _userManager = userManager;
@@ -39,6 +41,7 @@ namespace Minimal_chat_application.Controllers
             _context = context;
             _configuration = configuration;
             _appSettings = applicationSetting.Value;
+            _userService = userService;
 
         }
 
@@ -50,32 +53,17 @@ namespace Minimal_chat_application.Controllers
                 return BadRequest(new { error = "Validation failed", errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
             }
 
-            // Check if a user with the same email already exists
-            var existingUser = await _userManager.FindByEmailAsync(userRegisterModel.Email);
-            if (existingUser != null)
-            {
-                return Conflict(new { error = "User already registered with this email" });
-            }
-
-            var user = new User
-            {
-                Email = userRegisterModel.Email,
-                UserName = userRegisterModel.FirstName,
-                FirstName = userRegisterModel.FirstName,
-                LastName = userRegisterModel.LastName
-            };
-
-            var result = await _userManager.CreateAsync(user, userRegisterModel.Password);
+            var result = await _userService.RegisterUser(userRegisterModel);
 
             if (result.Succeeded)
             {
                 await _context.SaveChangesAsync();
                 return Ok(new
                 {
-                    userId = user.Id,
-                    firstName = user.FirstName,
-                    lastName = user.LastName,
-                    email = user.Email
+                    //userId = result.Id,
+                    //firstName = user.FirstName,
+                    //lastName = user.LastName,
+                    //email = user.Email
                 });
             }
             else
@@ -84,6 +72,7 @@ namespace Minimal_chat_application.Controllers
                 return BadRequest(new { error = "User registration failed", errors = result.Errors.Select(e => e.Description) });
             }
         }
+
 
         [HttpPost("Login")]
         public async Task<IActionResult> Login([FromBody] LoginModel model)

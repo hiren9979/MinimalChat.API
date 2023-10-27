@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
 using MinimalChat.API.Hubs;
+using MinimalChat.Data.Services;
 using MinimalChat.Domain.Model;
 using System;
 using System.Globalization;
@@ -27,18 +28,21 @@ namespace Minimal_chat_application.Controllers
         private readonly UserManager<User> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly IHubContext<ChatHub> _hubContext;
+        private readonly MessageService _messageService;
 
-        public MessageController(UserManager<User> userManager, ApplicationDbContext context, IHubContext<ChatHub> hubContext)
+        public MessageController(UserManager<User> userManager, ApplicationDbContext context, IHubContext<ChatHub> hubContext,MessageService messageSergice)
         {
             _userManager = userManager;
             _context = context;
             _hubContext = hubContext;
+            _messageService = messageSergice;
         }
 
         [HttpPost("SendMessages")]
         [Authorize]
         public async Task<IActionResult> SendMessage([FromBody] SendMessageModel sendMessageModel)
         {
+
             var senderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrWhiteSpace(senderId))
             {
@@ -50,113 +54,79 @@ namespace Minimal_chat_application.Controllers
                 return BadRequest(new { error = "Validation failed", errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
             }
 
-            // Check if the receiver exists
-            var receiver = await _userManager.FindByIdAsync(sendMessageModel.ReceiverId);
-            if (receiver == null)
+            try
             {
-                return BadRequest(new { error = "Receiver user not found" });
+                var message = await _messageService.SendMessage(senderId, sendMessageModel);
+                if (message == null)
+                {
+                    return Conflict("Error while sending message");
+                }
+
+
+                await _hubContext.Clients.All.SendAsync("ReceiveMessage", message);
+
+
+                return Ok(new
+                {
+                    messageId = message.Id,
+                    senderId = message.SenderId,
+                    receiverId = message.ReceiverId,
+                    content = message.Content,
+                    timestamp = message.Timestamp
+                });
             }
-
-            var message = new Message
+            catch (Exception ex)
             {
-                SenderId = senderId,
-                ReceiverId = sendMessageModel.ReceiverId,
-                Content = sendMessageModel.Content,
-                Timestamp = DateTime.Now
-            };
+                // Log the exception for debugging purposes
+                Console.WriteLine(ex);
 
-            // Broadcast the message via SignalR
-
-
-            _context.Messages.Add(message);
-            await _context.SaveChangesAsync();
-            message.Id = message.Id;
-            await _hubContext.Clients.All.SendAsync("ReceiveMessage", message);
-
-            return Ok(new
-            {
-                messageId = message.Id,
-                senderId = message.SenderId,
-                receiverId = message.ReceiverId,
-                content = message.Content,
-                timestamp = message.Timestamp
-            });
+                // Return an appropriate error response
+                return StatusCode(500, "An internal server error occurred.");
+            }
         }
 
-        //Edit message with messageId
+
         [HttpPost("EditMessage/{messageId}")]
         [Authorize]
-
         public async Task<IActionResult> EditMessage(int messageId, [FromBody] EditMessageModel editMessageModel)
         {
-
-            // Check if the message with the given messageId exists.
-            var message = await _context.Messages.FindAsync(messageId);
             var loginUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (message.SenderId != loginUserId)
-            {
-                return Unauthorized(new { error = "Unauthorized access - Try to edit message send by you not others" });
-            }
-
-            if (message == null)
-            {
-                return NotFound(new { error = "Message not found" });
-            }
-
-            // Update the message content.
-            message.Content = editMessageModel.Content;
-
-            // Save the changes to the database.
-            await _context.SaveChangesAsync();
-
-            // Broadcast the message via SignalR
-            await _hubContext.Clients.All.SendAsync("EditMessage", messageId, editMessageModel.Content);
-
-
-            return Ok(new
-            {
-                messageId = message.Id,
-                content = message.Content,
-                timestamp = message.Timestamp
-            });
-        }
-
-        //Delete message
-        [HttpDelete("DeleteMessage/{messageId}")]
-        [Authorize]
-        public async Task<IActionResult> DeleteMessage(int messageId)
-        {
-            // Your code here to fetch and delete the message with the given messageId.
-
-            // Check if the message with the given messageId exists.
-            var message = await _context.Messages.FindAsync(messageId);
-
-            var loginUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            if (message.SenderId != loginUserId)
-            {
-                return Unauthorized(new { error = "Unauthorized access - Try to delete message send by you not others" });
-            }
-
-            if (message == null)
-            {
-                return NotFound(new { error = "Message not found" });
-            }
-
-            // Check if the user making the request is the sender of the message.
-            var senderId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (senderId != message.SenderId)
+            if (string.IsNullOrWhiteSpace(loginUserId))
             {
                 return Unauthorized(new { error = "Unauthorized access" });
             }
 
-            // Remove the message from the database.
-            _context.Messages.Remove(message);
-            await _context.SaveChangesAsync();
+            var editedMessage = await _messageService.EditMessage(messageId, loginUserId, editMessageModel);
 
-            // Broadcast the message via SignalR
-            await _hubContext.Clients.All.SendAsync("DeleteMesage", messageId);
+            if (editedMessage == null)
+            {
+                return NotFound(new { error = "Message not found" });
+            }
+
+            return Ok(new
+            {
+                messageId = editedMessage.Id,
+                content = editedMessage.Content,
+                timestamp = editedMessage.Timestamp
+            });
+        }
+
+        [HttpDelete("DeleteMessage/{messageId}")]
+        [Authorize]
+        public async Task<IActionResult> DeleteMessage(int messageId)
+        {
+            var loginUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(loginUserId))
+            {
+                return Unauthorized(new { error = "Unauthorized access" });
+            }
+
+            bool messageDeleted = await _messageService.DeleteMessage(messageId, loginUserId);
+
+            if (!messageDeleted)
+            {
+                return NotFound(new { error = "Message not found or unauthorized" });
+            }
 
 
             return Ok(new
@@ -165,190 +135,62 @@ namespace Minimal_chat_application.Controllers
             });
         }
 
-        //Fetch conversation history
+
         [HttpGet("ConversationHistory")]
         public async Task<IActionResult> GetConversationHistory(
-        /* [FromBody] FetchConverstionModel fetchConverstionModel*/
-        [FromQuery] string receiverId,
-        [FromQuery] string? sort,
-        [FromQuery] DateTime? time,
-        [FromQuery] int? count,
-        [FromQuery] Boolean isGroup
-
-        )
+            [FromQuery] string receiverId,
+            [FromQuery] string? sort,
+            [FromQuery] DateTime? time,
+            [FromQuery] int? count,
+            [FromQuery] bool isGroup)
         {
-            // Get the current user's ID from the token
             var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            User chattingUser ;
-            string chattingUserId;
-            if (isGroup)
+            if (string.IsNullOrWhiteSpace(currentUserId))
             {
-                GroupChat g = await _context.GroupChats.FirstOrDefaultAsync(g => g.Id == receiverId);
-                chattingUserId = g.Id;
-              
-            }
-            else
-            {
-                chattingUser = await _userManager.FindByIdAsync(receiverId);
-                chattingUserId = chattingUser.Id;
+                return Unauthorized(new { error = "Unauthorized access" });
             }
 
-            // Check if the specified user exists
-            if (chattingUserId == null)
+            var response = await _messageService.GetConversationHistory(currentUserId, receiverId, sort, time, count, isGroup);
+
+            if (response == null)
             {
                 return NotFound(new { error = "Receiver user not found" });
             }
 
-            var query = isGroup
-                         ? _context.Messages
-                             .Where(m => m.ReceiverId == receiverId)
-                             .AsQueryable()
-                         : _context.Messages
-                             .Where(m => (m.SenderId == currentUserId && m.ReceiverId == chattingUserId)
-                                         || (m.SenderId == chattingUserId && m.ReceiverId == currentUserId))
-                             .AsQueryable();
-
-
-            // Apply sorting based on timestamp
-            if (sort == "desc")
-            {
-                query = query.OrderByDescending(m => m.Timestamp);
-            }
-            else
-            {
-                query = query.OrderBy(m => m.Timestamp);
-            }
-
-            TimeZoneInfo sourceTimeZone = TimeZoneInfo.Utc;
-
-            // Define the target time zone (Indian Standard Time)
-            TimeZoneInfo targetTimeZone = TimeZoneInfo.FindSystemTimeZoneById("India Standard Time");
-
-            // Convert the time to IST
-            DateTime istTime = TimeZoneInfo.ConvertTimeFromUtc(time.Value, targetTimeZone);
-
-            // Apply filtering based on the 'before' timestamp
-            if (time.HasValue)
-            {
-
-                query = query.Where(m => m.Timestamp < istTime);
-            }
-            else
-            {
-                query = query.Where(m => m.Timestamp < DateTime.Now);
-            }
-
-            if (!count.HasValue || count > 20)
-            {
-                count = 20;
-            }
-
-            var messages = await query
-                            .OrderByDescending(m => m.Timestamp)
-                            .Take(20)
-                            .ToListAsync();
-
-            //Prepare response
-            var response = new
-            {
-                messages = messages.Select(m => new
-                {
-                    id = m.Id,
-                    senderId = m.SenderId,
-                    receiverId = m.ReceiverId,
-                    content = m.Content,
-                    timestamp = m.Timestamp
-                })
-            };
-
             return Ok(response);
         }
+
 
 
         [HttpGet("SearchConversations")]
         [Authorize]
         public async Task<IActionResult> SearchConversations([FromQuery] string query, [FromQuery] string receiverId)
         {
-            // Get the current user's ID from the token
             var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrWhiteSpace(currentUserId))
+            {
+                return Unauthorized(new { error = "Unauthorized access" });
+            }
 
-            if (string.IsNullOrWhiteSpace(query))
+            var response = await _messageService.SearchConversations(currentUserId, query, receiverId);
+
+            if (response == null)
             {
                 return BadRequest(new { error = "Invalid query parameter" });
             }
 
-            // Define the query for searching messages
-            var queryNormalized = query.ToLowerInvariant(); // Normalize query for case-insensitive search
-            var messages = await _context.Messages
-                .Where(m =>
-                    ((m.SenderId == currentUserId && m.ReceiverId == receiverId)
-                    || (m.SenderId == receiverId && m.ReceiverId == currentUserId))
-                    && m.Content.ToLower().Contains(queryNormalized))
-                .OrderByDescending(m => m.Timestamp)
-                .ToListAsync();
-
-            // Prepare the response
-            var response = new
-            {
-                messages = messages.Select(m => new
-                {
-                    id = m.Id,
-                    senderId = m.SenderId,
-                    receiverId = m.ReceiverId,
-                    content = m.Content,
-                    timestamp = m.Timestamp
-                })
-            };
-
             return Ok(response);
         }
+
 
         [HttpGet("TaggedMessages")]
         public async Task<IActionResult> GetTaggedMessages()
         {
-            // Get messages whose content starts with "[[]]"b
-            var taggedMessages = await _context.Messages
-                .Where(m => m.Content.StartsWith("[[]]"))
-                .OrderByDescending(m => m.Timestamp)
-                .ToListAsync();
-
-            // Collect distinct user ids from senderId and receiverId
-            var userIds = taggedMessages
-                .SelectMany(m => new[] { m.SenderId, m.ReceiverId })
-                .Distinct();
-
-            // Retrieve user details for the collected user ids
-            var users = await _userManager.Users
-                .Where(u => userIds.Contains(u.Id))
-                .ToDictionaryAsync(u => u.Id);
-
-            // Prepare the response
-            var response = new
-            {
-                messages = taggedMessages.Select(m => new
-                {
-                    id = m.Id,
-                    sender = users.ContainsKey(m.SenderId) ? new
-                    {
-                        id = users[m.SenderId].Id,
-                        userName = users[m.SenderId].UserName, // Change to the appropriate user property
-                        email = users[m.SenderId].Email
-                                                               // Add other user properties you want to include
-                    } : null,
-                    receiver = users.ContainsKey(m.ReceiverId) ? new
-                    {
-                        id = users[m.ReceiverId].Id,
-                        userName = users[m.ReceiverId].UserName, // Change to the appropriate user property
-                                                                 // Add other user properties you want to include
-                    } : null,
-                    content = m.Content,
-                    timestamp = m.Timestamp
-                })
-            };
+            var response = await _messageService.GetTaggedMessages();
 
             return Ok(response);
         }
+
 
 
     }
