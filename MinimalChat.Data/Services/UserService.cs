@@ -1,9 +1,15 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
+using Microsoft.IdentityModel.Tokens;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
+using MinimalChat.Domain.DTO;
 using System;
 using System.Collections.Generic;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,11 +19,16 @@ namespace MinimalChat.Data.Services
     {
         private readonly UserManager<User> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly SignInManager<User> _signInManager;
+        private readonly IConfiguration _configuration;
 
-        public UserService(UserManager<User> userManager, ApplicationDbContext context)
+
+        public UserService(UserManager<User> userManager, ApplicationDbContext context, SignInManager<User> signInManager, IConfiguration configuration)
         {
             _userManager = userManager;
             _context = context;
+            _signInManager = signInManager;
+            _configuration = configuration;
         }
 
         public async Task<IdentityResult> RegisterUser(RegisterModel userRegisterModel)
@@ -38,6 +49,67 @@ namespace MinimalChat.Data.Services
             };
 
             return await _userManager.CreateAsync(user, userRegisterModel.Password);
+        }
+
+        public async Task<LoginResult> Login(LoginModel model)
+        {
+            try
+            {
+                var user = await _userManager.FindByEmailAsync(model.Email);
+                if (user == null)
+                {
+                    return new LoginResult { Succeeded = false, Error = "User not found" };
+                }
+
+                var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: false);
+
+                if (result.Succeeded)
+                {
+                    var token = GenerateJwtToken(user);
+                    var profile = new
+                    {
+                        id = user.Id,
+                        name = user.UserName,
+                        email = user.Email
+                    };
+                    return new LoginResult { Succeeded = true, Token = token, Profile = profile };
+                }
+                else
+                {
+                    return new LoginResult { Succeeded = false, Error = "Invalid credentials" };
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the exception for debugging purposes
+                // You can also return a generic error message
+                return new LoginResult { Succeeded = false, Error = "An error occurred" };
+            }
+        }
+
+
+        //Generate jwt token
+        private string GenerateJwtToken(User user)
+        {
+            var authClaims = new List<Claim>
+                    {
+                        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                        new Claim(ClaimTypes.Name, user.FirstName),
+                        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                    };
+
+            var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                expires: DateTime.Now.AddHours(3),
+                claims: authClaims,
+                signingCredentials: new SigningCredentials(authSigningKey, SecurityAlgorithms.HmacSha256)
+                );
+
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
         }
 
 

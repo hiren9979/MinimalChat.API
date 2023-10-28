@@ -30,7 +30,10 @@ namespace Minimal_chat_application
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddScoped<GroupChatService>();
             builder.Services.AddScoped<MessageService>();
-            
+            builder.Services.AddScoped<UserService>();
+            builder.Services.AddScoped<LogService>();
+
+
             // Define and configure Swagger documentation settings for API.
             builder.Services.AddSwaggerGen(option =>
             {
