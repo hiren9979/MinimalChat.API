@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
+using MinimalChat.Data.Services;
 
 namespace Minimal_chat_application.Controllers
 {
@@ -14,15 +15,18 @@ namespace Minimal_chat_application.Controllers
     { 
 
         private readonly ApplicationDbContext _context;
-     
-        public LogController(ApplicationDbContext context)
+        private readonly LogService _logService;
+
+        public LogController(ApplicationDbContext context,LogService logService)
         {
             _context = context;
+            _logService = logService;
         }
+
 
         [HttpGet("GetLog")]
         [Authorize]
-        public IActionResult GetLogs(DateTime? startTime, DateTime? endTime)
+        public IActionResult GetLogs([FromQuery ]DateTime? startTime, [FromQuery] DateTime? endTime)
         {
             try
             {
@@ -30,14 +34,12 @@ namespace Minimal_chat_application.Controllers
                 startTime ??= DateTime.Now.AddMinutes(-5);
                 endTime ??= DateTime.Now;
 
-                if (startTime > endTime)
+                var logs = _logService.GetLogs(startTime.Value, endTime.Value);
+
+                if (logs == null)
                 {
                     return BadRequest(new { error = "Invalid request parameters: StartTime cannot be greater than EndTime." });
                 }
-
-                var logs = _context.Logs
-                    .Where(log => log.Timestamp >= startTime && log.Timestamp <= endTime)
-                    .ToList();
 
                 if (logs.Count == 0)
                 {

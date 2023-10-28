@@ -16,6 +16,7 @@ using Google.Apis.Auth;
 using MinimalChat.API;
 using Microsoft.Extensions.Options;
 using MinimalChat.Data.Services;
+using MinimalChat.Domain.DTO;
 
 namespace Minimal_chat_application.Controllers
 {
@@ -46,7 +47,7 @@ namespace Minimal_chat_application.Controllers
         }
 
         [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromQuery] RegisterModel userRegisterModel)
+        public async Task<IActionResult> Register([FromBody] RegisterModel userRegisterModel)
         {
             if (!ModelState.IsValid)
             {
@@ -75,49 +76,45 @@ namespace Minimal_chat_application.Controllers
 
 
         [HttpPost("Login")]
-        public async Task<IActionResult> Login([FromBody] LoginModel model)
+        public async Task<LoginResult> Login([FromBody] LoginModel model)
         {
             if (!ModelState.IsValid)
             {
-                return BadRequest(new { error = "Validation failed", errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
+                return new LoginResult { Succeeded = false, Error = "Validation failed" };
             }
 
             try
             {
-                var user = await _userManager.FindByEmailAsync(model.Email);
-                if (user == null)
+                LoginResult loginResult = (LoginResult)await _userService.Login(model);
+
+                if (loginResult.Succeeded)
                 {
-                    return Unauthorized(new { error = "User not found" });
+                    // Authentication was successful, return the token and user profile
+                    return loginResult;
                 }
-                var result = await _signInManager.CheckPasswordSignInAsync(user, model.Password, lockoutOnFailure: false);
-
-                if (result.Succeeded)
+                else if (loginResult.Error == "User not found")
                 {
-
-                    var token = GenerateJwtToken(user);
-                    var profile = new
-                    {
-                        id = user.Id,
-                        name = user.UserName,
-                        email = user.Email
-                    };
-                    return Ok(new { token, profile });
+                    return new LoginResult { Succeeded = false, Error = "User not found" };
+                }
+                else if (loginResult.Error == "Invalid credentials")
+                {
+                    return new LoginResult { Succeeded = false, Error = "Invalid credentials" };
                 }
                 else
                 {
-                    return Unauthorized(new { error = "Invalid credentials" });
+                    // Handle other errors
+                    return new LoginResult { Succeeded = false, Error = "An error occurred" };
                 }
-
-                // Rest of your code
             }
             catch (Exception ex)
             {
                 // Log the exception for debugging purposes
                 // You can also return a generic error message
-                return StatusCode(500, new { error = "An error occurred while processing your request" });
+                return new LoginResult { Succeeded = false, Error = "An error occurred" };
             }
-         
         }
+
+
 
         [HttpPost("LoginWithGoogle")]
         public async Task<IActionResult> LoginWithGoogle([FromBody] string credential)
