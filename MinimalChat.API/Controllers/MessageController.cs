@@ -191,6 +191,19 @@ namespace Minimal_chat_application.Controllers
             return Ok(response);
         }
 
+            [HttpPost("AddEmojiReaction")]
+            public IActionResult AddEmojiReaction([FromQuery]int messageId,[FromQuery] string emoji)
+            {
+                try
+                {
+                    _messageService.AddEmojiReaction(messageId, emoji);
+                    return Ok(new { message = "Emoji reaction added successfully" });
+                }   
+                catch (Exception ex)
+                {
+                    return BadRequest(new { error = "Failed to add emoji reaction", message = ex.Message });
+                }
+            }
 
 
     }

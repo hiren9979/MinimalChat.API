@@ -12,6 +12,8 @@ namespace Minimal_chat_application.Model
 
         public string Content { get; set; }
         public DateTime Timestamp { get; set; }
+
+        public string EmojiReaction { get; set; }
     }
 
 }
