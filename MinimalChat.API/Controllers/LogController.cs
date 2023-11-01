@@ -43,7 +43,7 @@ namespace Minimal_chat_application.Controllers
 
                 if (logs.Count == 0)
                 {
-                    return NotFound(new { error = "No logs found" });
+                    return Ok(new { message = "No logs found" });
                 }
 
                 return Ok(logs);

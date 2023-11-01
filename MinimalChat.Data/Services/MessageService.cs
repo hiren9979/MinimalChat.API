@@ -144,7 +144,8 @@ namespace MinimalChat.Data.Services
                     senderId = m.SenderId,
                     receiverId = m.ReceiverId,
                     content = m.Content,
-                    timestamp = m.Timestamp
+                    timestamp = m.Timestamp,
+                    emojiReaction = m.EmojiReaction
                 })
             };
 
@@ -222,6 +223,20 @@ namespace MinimalChat.Data.Services
             };
 
             return response;
+        }
+
+        public async Task AddEmojiReaction(int messageId, string emoji)
+        {
+            var message = _context.Messages.FirstOrDefault(m => m.Id == messageId);
+            if (message != null)
+            {
+                message.EmojiReaction = emoji;
+                _context.SaveChanges();
+            }
+            else
+            {
+                throw new Exception("Message not found");
+            }
         }
 
 
