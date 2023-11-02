@@ -32,6 +32,7 @@ namespace Minimal_chat_application
             builder.Services.AddScoped<MessageService>();
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<LogService>();
+            builder.Services.AddScoped<EmojiReactionService>();
 
 
             // Define and configure Swagger documentation settings for API.

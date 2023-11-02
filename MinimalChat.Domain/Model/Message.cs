@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Minimal_chat_application.Model
 {
@@ -13,7 +15,6 @@ namespace Minimal_chat_application.Model
         public string Content { get; set; }
         public DateTime Timestamp { get; set; }
 
-        public string EmojiReaction { get; set; }
     }
 
 }

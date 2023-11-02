@@ -24,6 +24,8 @@ namespace Minimal_chat_application.Context
 
         public DbSet<TagUserMessage> TagUserMessage { get; set; }
 
+        public DbSet<EmojiReaction> EmojiReactions { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

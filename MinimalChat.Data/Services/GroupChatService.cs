@@ -406,9 +406,17 @@ namespace MinimalChat.Data.Services
 
                 messages.Add(message);
 
-            await _dbContext.SaveChangesAsync();
-
-            return message;
+            try
+            {
+                await _dbContext.SaveChangesAsync();
+                return message;
+            }
+            catch (Exception ex)
+            {
+                // Handle the exception or log it for debugging
+                Console.WriteLine($"Error while saving message: {ex.Message}");
+                return null;
+            }
 
         }
 

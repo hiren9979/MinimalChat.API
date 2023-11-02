@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Minimal_chat_application.Context;
 
@@ -11,9 +12,11 @@ using Minimal_chat_application.Context;
 namespace MinimalChat.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20231102050035_EmojiReactionModel")]
+    partial class EmojiReactionModel
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -175,8 +178,6 @@ namespace MinimalChat.Data.Migrations
                         .HasColumnType("nvarchar(max)");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("MessageId");
 
                     b.ToTable("EmojiReactions");
                 });
@@ -436,17 +437,6 @@ namespace MinimalChat.Data.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-                });
-
-            modelBuilder.Entity("MinimalChat.Domain.Model.EmojiReaction", b =>
-                {
-                    b.HasOne("Minimal_chat_application.Model.Message", "Message")
-                        .WithMany()
-                        .HasForeignKey("MessageId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Message");
                 });
 
             modelBuilder.Entity("MinimalChat.Domain.Model.GroupMember", b =>
