@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
+using MinimalChat.Domain.DTO;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -145,11 +146,45 @@ namespace MinimalChat.Data.Services
                     receiverId = m.ReceiverId,
                     content = m.Content,
                     timestamp = m.Timestamp,
-                    emojiReaction = m.EmojiReaction
+                    emojiReaction = GetEmojiReactionsForMessage(m.Id)
                 })
             };
 
+
             return response;
+        }
+
+
+        public List<EmojiReactionResponseDTO> GetEmojiReactionsForMessage(int messageId)
+        {
+            var reactions = _context.EmojiReactions
+                            .Where(reaction => reaction.MessageId == messageId)
+                            .ToList();
+
+            // Create a list of EmojiReactionWithUser that includes user information
+            var reactionsWithUser = new List<EmojiReactionResponseDTO>();
+
+            foreach (var reaction in reactions)
+            {
+                var user = _userManager.FindByIdAsync(reaction.UserId).Result; // Assuming UserManager is used for user management
+
+                if (user != null)
+                {
+                    var reactionWithUser = new EmojiReactionResponseDTO
+                    {
+                        Id = reaction.Id,
+                        MessageId = reaction.MessageId,
+                        UserId = reaction.UserId,
+                        Emoji = reaction.Emoji,
+                        UserName = user.FirstName + ' ' + user.LastName,
+
+                    };
+
+                    reactionsWithUser.Add(reactionWithUser);
+                }
+            }
+
+            return reactionsWithUser;
         }
 
         public async Task<object> SearchConversations(string currentUserId, string query, string receiverId)
@@ -227,17 +262,17 @@ namespace MinimalChat.Data.Services
 
         public async Task AddEmojiReaction(int messageId, string emoji)
         {
-            var message = _context.Messages.FirstOrDefault(m => m.Id == messageId);
+            var message = _context.EmojiReactions.FirstOrDefault(m => m.Id == messageId);
             if (message != null)
             {
-                message.EmojiReaction = emoji;
+                message.Emoji = emoji;
                 _context.SaveChanges();
             }
             else
             {
                 throw new Exception("Message not found");
             }
-        }
+            }
 
 
     }
