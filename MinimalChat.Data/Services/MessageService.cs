@@ -158,17 +158,26 @@ namespace MinimalChat.Data.Services
         public List<EmojiReactionResponseDTO> GetEmojiReactionsForMessage(int messageId)
         {
             var reactions = _context.EmojiReactions
-                            .Where(reaction => reaction.MessageId == messageId)
-                            .ToList();
+                .Where(reaction => reaction.MessageId == messageId)
+                .ToList();
+
+            // Collect user IDs to fetch user information in a single query
+            var userIds = reactions.Select(reaction => reaction.UserId).ToList();
+
+            // Fetch user information for the collected user IDs
+            var users = _userManager.Users
+                .Where(user => userIds.Contains(user.Id))
+                .ToList();
+
+            // Create a dictionary for quick user lookup
+            var userDictionary = users.ToDictionary(user => user.Id);
 
             // Create a list of EmojiReactionWithUser that includes user information
             var reactionsWithUser = new List<EmojiReactionResponseDTO>();
 
             foreach (var reaction in reactions)
             {
-                var user = _userManager.FindByIdAsync(reaction.UserId).Result; // Assuming UserManager is used for user management
-
-                if (user != null)
+                if (userDictionary.TryGetValue(reaction.UserId, out var user))
                 {
                     var reactionWithUser = new EmojiReactionResponseDTO
                     {
@@ -177,7 +186,6 @@ namespace MinimalChat.Data.Services
                         UserId = reaction.UserId,
                         Emoji = reaction.Emoji,
                         UserName = user.FirstName + ' ' + user.LastName,
-
                     };
 
                     reactionsWithUser.Add(reactionWithUser);
@@ -186,6 +194,7 @@ namespace MinimalChat.Data.Services
 
             return reactionsWithUser;
         }
+
 
         public async Task<object> SearchConversations(string currentUserId, string query, string receiverId)
         {
