@@ -5,6 +5,9 @@ using MinimalChat.Data.Services;
 using MinimalChat.Domain.DTO;
 using MinimalChat.Domain.Model;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Minimal_chat_application.Model;
+using MinimalChat.API.Hubs;
 
 namespace MinimalChat.API.Controllers
 {
@@ -14,11 +17,14 @@ namespace MinimalChat.API.Controllers
      {
         private readonly ApplicationDbContext _dbContext;
         private readonly EmojiReactionService _emojiReactionService;
+        private readonly IHubContext<ChatHub> _hubContext;
 
-        public EmojiReactionController(ApplicationDbContext context,EmojiReactionService emojiReactionService)
+
+        public EmojiReactionController(ApplicationDbContext context,EmojiReactionService emojiReactionService, IHubContext<ChatHub> hubContext)
         {
             _dbContext = context;
             _emojiReactionService = emojiReactionService;
+            _hubContext = hubContext;
         }
 
         [HttpPost("AddEmoji")]
@@ -32,6 +38,8 @@ namespace MinimalChat.API.Controllers
             {
                 return NotFound(new { error = "There is no message like this..." });
             }
+
+            await _hubContext.Clients.All.SendAsync("ReceiveEmoji", reaction);
 
             return Ok(reaction);
                 
