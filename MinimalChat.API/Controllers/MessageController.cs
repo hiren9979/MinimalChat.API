@@ -38,7 +38,7 @@ namespace Minimal_chat_application.Controllers
             _messageService = messageSergice;
         }
 
-        [HttpPost("SendMessages")]
+        [HttpPost("messages")]
         [Authorize]
         public async Task<IActionResult> SendMessage([FromBody] SendMessageModel sendMessageModel)
         {
@@ -85,11 +85,15 @@ namespace Minimal_chat_application.Controllers
             }
         }
 
-
-        [HttpPost("EditMessage/{messageId}")]
+        [HttpPost("messages/{messageId}")]
         [Authorize]
         public async Task<IActionResult> EditMessage(int messageId, [FromBody] EditMessageModel editMessageModel)
         {
+            if (messageId == null)
+            {
+                return BadRequest(new { error = "Invalid message ID" });
+            }
+
             var loginUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrWhiteSpace(loginUserId))
             {
@@ -111,10 +115,16 @@ namespace Minimal_chat_application.Controllers
             });
         }
 
-        [HttpDelete("DeleteMessage/{messageId}")]
+
+        [HttpDelete("messages/{messageId}")]
         [Authorize]
         public async Task<IActionResult> DeleteMessage(int messageId)
         {
+            if (messageId == null)
+            {
+                return BadRequest(new { error = "Invalid message ID" });
+            }
+
             var loginUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrWhiteSpace(loginUserId))
             {
@@ -128,7 +138,6 @@ namespace Minimal_chat_application.Controllers
                 return NotFound(new { error = "Message not found or unauthorized" });
             }
 
-
             return Ok(new
             {
                 messageDeleted = true
@@ -136,13 +145,10 @@ namespace Minimal_chat_application.Controllers
         }
 
 
+
         [HttpGet("ConversationHistory")]
-        public async Task<IActionResult> GetConversationHistory(
-            [FromQuery] string receiverId,
-            [FromQuery] string? sort,
-            [FromQuery] DateTime? time,
-            [FromQuery] int? count,
-            [FromQuery] bool isGroup)
+        [Authorize]
+        public async Task<IActionResult> GetConversationHistory([FromQuery] ConversationHistoryRequestModel model)
         {
             var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             if (string.IsNullOrWhiteSpace(currentUserId))
@@ -150,7 +156,16 @@ namespace Minimal_chat_application.Controllers
                 return Unauthorized(new { error = "Unauthorized access" });
             }
 
-            var response = await _messageService.GetConversationHistory(currentUserId, receiverId, sort, time, count, isGroup);
+            int recordCount = model.Count.HasValue ? model.Count.Value : 20; // Use count parameter or default to 20
+
+            var response = await _messageService.GetConversationHistory(
+                currentUserId,
+                model.ReceiverId,
+                model.Sort,
+                model.Time,
+                recordCount,
+                model.IsGroup
+            );
 
             if (response == null)
             {
@@ -159,6 +174,7 @@ namespace Minimal_chat_application.Controllers
 
             return Ok(response);
         }
+
 
 
 

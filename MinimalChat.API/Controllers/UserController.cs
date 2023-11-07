@@ -47,32 +47,35 @@ namespace Minimal_chat_application.Controllers
         }
 
         [HttpPost("Register")]
-        public async Task<IActionResult> Register([FromBody] RegisterModel userRegisterModel)
+        public async Task<ActionResult<RegisterResponseDTO>> Register([FromBody] RegisterModel userRegisterModel)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(new { error = "Validation failed", errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
             }
 
-            var result = await _userService.RegisterUser(userRegisterModel);
+            var registeredUser = await _userService.RegisterUser(userRegisterModel);
 
-            if (result.Succeeded)
+            if (registeredUser != null)
             {
-                await _context.SaveChangesAsync();
-                return Ok(new
+                // Registration was successful, return the user data
+                var responseDTO = new RegisterResponseDTO
                 {
-                    //userId = result.Id,
-                    //firstName = user.FirstName,
-                    //lastName = user.LastName,
-                    //email = user.Email
-                });
+                    Id = registeredUser.Id,
+                    FirstName = registeredUser.FirstName,
+                    LastName = registeredUser.LastName,
+                    Email = registeredUser.Email
+                };
+
+                return responseDTO;
             }
             else
             {
-                // Handle other registration errors here
-                return BadRequest(new { error = "User registration failed", errors = result.Errors.Select(e => e.Description) });
+                // Handle registration errors here
+                return BadRequest(new { error = "Registration of user failed" });
             }
         }
+
 
 
         [HttpPost("Login")]
@@ -154,25 +157,16 @@ namespace Minimal_chat_application.Controllers
         [Authorize]
         public IActionResult GetUsers()
         {
-            // Get the ID of the currently authenticated user
             var currentUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            var users = _context.Users
-                .Where(u => u.Id != currentUserId) // Exclude the currently authenticated user
-                .Select(u => new User
+                var users = _userService.GetUsersExcludingCurrentUser(currentUserId);
+
+                if (users.Count == 0)
                 {
-                    Id = u.Id,
-                    FirstName = u.FirstName + " " + u.LastName,
-                    Email = u.Email
-                })
-                .ToList();
+                    return NotFound(new { error = "No other users found" });
+                }
 
-            if (users.Count == 0)
-            {
-                return NotFound(new { error = "No other users found" });
-            }
-
-            return Ok(new { users });
+                return Ok(new { users });
         }
 
 

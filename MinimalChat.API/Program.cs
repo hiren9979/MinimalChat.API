@@ -143,6 +143,7 @@ namespace Minimal_chat_application
             app.UseAuthorization();
 
             //app.UseRequestLoggingMiddleware();
+            app.UseRequestLoggingMiddleware();
 
 
             app.MapControllers();
