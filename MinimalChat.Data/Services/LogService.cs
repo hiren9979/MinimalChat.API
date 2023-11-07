@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
+using MinimalChat.Domain.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace MinimalChat.Data.Services
 {
-    public class LogService
+    public class LogService : ILogService
     {
         private readonly ApplicationDbContext _context;
 

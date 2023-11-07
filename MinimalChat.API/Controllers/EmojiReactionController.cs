@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Minimal_chat_application.Model;
 using MinimalChat.API.Hubs;
+using MinimalChat.Domain.Interface;
 
 namespace MinimalChat.API.Controllers
 {
@@ -16,11 +17,11 @@ namespace MinimalChat.API.Controllers
     public class EmojiReactionController : ControllerBase
      {
         private readonly ApplicationDbContext _dbContext;
-        private readonly EmojiReactionService _emojiReactionService;
+        private readonly IEmojiReactionService _emojiReactionService;
         private readonly IHubContext<ChatHub> _hubContext;
 
 
-        public EmojiReactionController(ApplicationDbContext context,EmojiReactionService emojiReactionService, IHubContext<ChatHub> hubContext)
+        public EmojiReactionController(ApplicationDbContext context,IEmojiReactionService emojiReactionService, IHubContext<ChatHub> hubContext)
         {
             _dbContext = context;
             _emojiReactionService = emojiReactionService;
