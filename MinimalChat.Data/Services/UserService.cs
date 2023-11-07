@@ -31,13 +31,13 @@ namespace MinimalChat.Data.Services
             _configuration = configuration;
         }
 
-        public async Task<IdentityResult> RegisterUser(RegisterModel userRegisterModel)
+        public async Task<User> RegisterUser(RegisterModel userRegisterModel)
         {
             // Check if a user with the same email already exists
             var existingUser = await _userManager.FindByEmailAsync(userRegisterModel.Email);
             if (existingUser != null)
             {
-                return IdentityResult.Failed(new IdentityError { Description = "User already registered with this email" });
+                return null; // User with the same email already exists
             }
 
             var user = new User
@@ -48,7 +48,14 @@ namespace MinimalChat.Data.Services
                 LastName = userRegisterModel.LastName
             };
 
-            return await _userManager.CreateAsync(user, userRegisterModel.Password);
+            var result = await _userManager.CreateAsync(user, userRegisterModel.Password);
+
+            if (result.Succeeded)
+            {
+                return user; // Return the newly registered user
+            }
+
+            return null; // Registration failed
         }
 
         public async Task<LoginResult> Login(LoginModel model)
@@ -85,6 +92,21 @@ namespace MinimalChat.Data.Services
                 // You can also return a generic error message
                 return new LoginResult { Succeeded = false, Error = "An error occurred" };
             }
+        }
+
+        public List<UserDTO> GetUsersExcludingCurrentUser(string currentUserId)
+        {
+            var users = _context.Users
+                .Where(u => u.Id != currentUserId)
+                .Select(u => new UserDTO
+                {
+                    Id = u.Id,
+                    firstName = u.FirstName,
+                    Email = u.Email
+                })
+                .ToList();
+
+            return users;
         }
 
 
