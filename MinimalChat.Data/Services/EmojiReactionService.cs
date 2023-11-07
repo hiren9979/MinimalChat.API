@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
 using MinimalChat.Domain.DTO;
+using MinimalChat.Domain.Interface;
 using MinimalChat.Domain.Model;
 using System;
 using System.Collections.Generic;
@@ -13,7 +14,7 @@ using System.Threading.Tasks;
 
 namespace MinimalChat.Data.Services
 {
-    public class EmojiReactionService
+    public class EmojiReactionService  : IEmojiReactionService
     {
         private readonly ApplicationDbContext _dbContext;
         private readonly UserManager<User> _userManager;

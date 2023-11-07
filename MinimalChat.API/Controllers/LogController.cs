@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
 using MinimalChat.Data.Services;
+using MinimalChat.Domain.Interface;
 
 namespace Minimal_chat_application.Controllers
 {
@@ -15,9 +16,9 @@ namespace Minimal_chat_application.Controllers
     { 
 
         private readonly ApplicationDbContext _context;
-        private readonly LogService _logService;
+        private readonly ILogService _logService;
 
-        public LogController(ApplicationDbContext context,LogService logService)
+        public LogController(ApplicationDbContext context,ILogService logService)
         {
             _context = context;
             _logService = logService;

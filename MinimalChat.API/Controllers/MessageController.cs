@@ -10,6 +10,7 @@ using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
 using MinimalChat.API.Hubs;
 using MinimalChat.Data.Services;
+using MinimalChat.Domain.Interface;
 using MinimalChat.Domain.Model;
 using System;
 using System.Globalization;
@@ -28,9 +29,9 @@ namespace Minimal_chat_application.Controllers
         private readonly UserManager<User> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly IHubContext<ChatHub> _hubContext;
-        private readonly MessageService _messageService;
+        private readonly IMessageService _messageService;
 
-        public MessageController(UserManager<User> userManager, ApplicationDbContext context, IHubContext<ChatHub> hubContext,MessageService messageSergice)
+        public MessageController(UserManager<User> userManager, ApplicationDbContext context, IHubContext<ChatHub> hubContext,IMessageService messageSergice)
         {
             _userManager = userManager;
             _context = context;

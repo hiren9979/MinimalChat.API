@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Minimal_chat_application.Context;
 using Minimal_chat_application.Model;
 using MinimalChat.Domain.DTO;
+using MinimalChat.Domain.Interface;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -14,7 +15,7 @@ using System.Threading.Tasks;
 
 namespace MinimalChat.Data.Services
 {
-    public class MessageService
+    public class MessageService : IMessageService
     {
         private readonly UserManager<User> _userManager;
         private readonly ApplicationDbContext _context;

@@ -12,6 +12,7 @@ using MinimalChat.API.Hubs;
 using MinimalChat.API;
 using System.Text;
 using MinimalChat.Data.Services;
+using MinimalChat.Domain.Interface;
 
 namespace Minimal_chat_application
 {
@@ -33,6 +34,16 @@ namespace Minimal_chat_application
             builder.Services.AddScoped<UserService>();
             builder.Services.AddScoped<LogService>();
             builder.Services.AddScoped<EmojiReactionService>();
+
+
+            builder.Services.AddScoped<IMessageService, MessageService>();
+            builder.Services.AddScoped<ILogService, LogService>();
+            builder.Services.AddScoped<IEmojiReactionService, EmojiReactionService>();
+            builder.Services.AddScoped<IGroupChat, GroupChatService>();
+
+
+
+
 
 
             // Define and configure Swagger documentation settings for API.
